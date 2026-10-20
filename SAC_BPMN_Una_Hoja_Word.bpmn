@@ -1,0 +1,242 @@
+<?xml version='1.0' encoding='UTF8'?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" id="Definitions_SAC" targetNamespace="https://example.org/utn/sac-bpmn" name="SAC - Gestión de incidencias">
+  <message id="Message_Incidencia" name="Incidencia comunicada"/>
+  <message id="Message_Respuesta" name="Resolución comunicada"/>
+  <collaboration id="Collaboration_SAC">
+    <participant id="Participant_Cliente" name="Cliente (externo)" processRef="Process_Cliente"/>
+    <participant id="Participant_FOCA" name="FOCA Software Factory S.A." processRef="Process_FOCA"/>
+    <messageFlow id="m1" sourceRef="cl_send" targetRef="f_start" name="Aviso de incidencia"/>
+    <messageFlow id="m2" sourceRef="f_notify" targetRef="cl_receive" name="Respuesta al cliente"/>
+  </collaboration>
+  <process id="Process_Cliente" name="Aviso y respuesta" isExecutable="false">
+    <startEvent id="cl_start" name="Inicio">
+      <outgoing>c1</outgoing>
+    </startEvent>
+    <sendTask id="cl_send" name="Comunicar incidencia a soporte" messageRef="Message_Incidencia">
+      <incoming>c1</incoming>
+      <outgoing>c2</outgoing>
+    </sendTask>
+    <intermediateCatchEvent id="cl_receive" name="Respuesta recibida">
+      <incoming>c2</incoming>
+      <outgoing>c3</outgoing>
+      <messageEventDefinition id="MessageEventDef_Respuesta" messageRef="Message_Respuesta"/>
+    </intermediateCatchEvent>
+    <endEvent id="cl_end" name="Fin">
+      <incoming>c3</incoming>
+    </endEvent>
+    <sequenceFlow id="c1" sourceRef="cl_start" targetRef="cl_send"/>
+    <sequenceFlow id="c2" sourceRef="cl_send" targetRef="cl_receive"/>
+    <sequenceFlow id="c3" sourceRef="cl_receive" targetRef="cl_end"/>
+  </process>
+  <process id="Process_FOCA" name="Gestión de incidencias SAC" isExecutable="false">
+    <laneSet id="LaneSet_FOCA">
+      <lane id="Lane_Soporte" name="Soporte Técnico">
+        <flowNodeRef>f_start</flowNodeRef>
+        <flowNodeRef>f_collect</flowNodeRef>
+        <flowNodeRef>f_register</flowNodeRef>
+        <flowNodeRef>f_support</flowNodeRef>
+        <flowNodeRef>f_document</flowNodeRef>
+        <flowNodeRef>f_close</flowNodeRef>
+        <flowNodeRef>f_notify</flowNodeRef>
+        <flowNodeRef>f_end</flowNodeRef>
+      </lane>
+      <lane id="Lane_Sac" name="Sistema Sac (Automatizado)">
+        <flowNodeRef>f_store</flowNodeRef>
+        <flowNodeRef>f_update</flowNodeRef>
+        <flowNodeRef>f_history</flowNodeRef>
+        <flowNodeRef>f_autoclose</flowNodeRef>
+      </lane>
+      <lane id="Lane_Coord" name="Coordinación / Supervisión">
+        <flowNodeRef>f_classify</flowNodeRef>
+        <flowNodeRef>g_route</flowNodeRef>
+        <flowNodeRef>g_merge</flowNodeRef>
+        <flowNodeRef>g_solved</flowNodeRef>
+        <flowNodeRef>f_reassign</flowNodeRef>
+      </lane>
+      <lane id="Lane_Desarrollo" name="Desarrollo">
+        <flowNodeRef>f_develop</flowNodeRef>
+      </lane>
+    </laneSet>
+    <startEvent id="f_start" name="Incidencia recibida">
+      <outgoing>f1</outgoing>
+      <messageEventDefinition id="MessageEventDef_Incidencia" messageRef="Message_Incidencia"/>
+    </startEvent>
+    <userTask id="f_collect" name="Relevar datos del incidente">
+      <incoming>f1</incoming>
+      <outgoing>f2</outgoing>
+    </userTask>
+    <userTask id="f_register" name="Registrar ticket en SAC">
+      <incoming>f2</incoming>
+      <outgoing>f3</outgoing>
+    </userTask>
+    <serviceTask id="f_store" name="Guardar ticket y generar identificador">
+      <incoming>f3</incoming>
+      <outgoing>f4</outgoing>
+    </serviceTask>
+    <userTask id="f_classify" name="Asignar técnico responsable al ticket">
+      <documentation>La asignación del ticket es una tarea humana ejecutada por un coordinador o supervisor, no por SAC ni automáticamente.</documentation><incoming>f4</incoming>
+      <outgoing>f5</outgoing>
+    </userTask>
+    <serviceTask id="f_update" name="Guardar asignación y actualizar estado">
+      <documentation>Se propone que SAC guarde los datos de asignación y el cambio de estado registrados durante la gestión.</documentation><incoming>f5</incoming>
+      <incoming>f16</incoming><outgoing>f6</outgoing>
+    </serviceTask>
+    <exclusiveGateway id="g_route" name="¿Requiere desarrollo?">
+      <incoming>f6</incoming>
+      <outgoing>f7</outgoing>
+      <outgoing>f8</outgoing>
+    </exclusiveGateway>
+    <userTask id="f_support" name="Atender incidencia">
+      <incoming>f7</incoming>
+      <outgoing>f9</outgoing>
+    </userTask>
+    <userTask id="f_develop" name="Analizar y corregir problema">
+      <incoming>f8</incoming>
+      <outgoing>f10</outgoing>
+    </userTask>
+    <exclusiveGateway id="g_merge" name="">
+      <incoming>f9</incoming>
+      <incoming>f10</incoming>
+      <outgoing>f11</outgoing>
+    </exclusiveGateway>
+    <userTask id="f_document" name="Documentar intervención y resultado">
+      <incoming>f11</incoming>
+      <outgoing>f12</outgoing>
+    </userTask>
+    <serviceTask id="f_history" name="Registrar seguimiento e historial">
+      <incoming>f12</incoming>
+      <outgoing>f13</outgoing>
+    </serviceTask>
+    <exclusiveGateway id="g_solved" name="¿Incidencia resuelta?">
+      <incoming>f13</incoming>
+      <outgoing>f14</outgoing>
+      <outgoing>f15</outgoing>
+    </exclusiveGateway>
+    <userTask id="f_reassign" name="Reevaluar y reasignar técnico">
+      <documentation>Cuando el ticket requiere nueva atención, Coordinación/Supervisión reevalúa la incidencia y asigna el técnico responsable.</documentation><incoming>f15</incoming>
+      <outgoing>f16</outgoing>
+    </userTask>
+    <userTask id="f_close" name="Confirmar cierre del ticket">
+      <incoming>f14</incoming>
+      <outgoing>f17</outgoing>
+    </userTask>
+    <serviceTask id="f_autoclose" name="Actualizar estado a Cerrado">
+      <incoming>f17</incoming>
+      <outgoing>f18</outgoing>
+    </serviceTask>
+    <sendTask id="f_notify" name="Comunicar resolución al cliente" messageRef="Message_Respuesta">
+      <incoming>f18</incoming>
+      <outgoing>f19</outgoing>
+    </sendTask>
+    <endEvent id="f_end" name="Ticket cerrado">
+      <incoming>f19</incoming>
+    </endEvent>
+    <sequenceFlow id="f1" sourceRef="f_start" targetRef="f_collect"/>
+    <sequenceFlow id="f2" sourceRef="f_collect" targetRef="f_register"/>
+    <sequenceFlow id="f3" sourceRef="f_register" targetRef="f_store"/>
+    <sequenceFlow id="f4" sourceRef="f_store" targetRef="f_classify"/>
+    <sequenceFlow id="f5" sourceRef="f_classify" targetRef="f_update"/>
+    <sequenceFlow id="f6" sourceRef="f_update" targetRef="g_route"/>
+    <sequenceFlow id="f7" sourceRef="g_route" targetRef="f_support" name="No"/>
+    <sequenceFlow id="f8" sourceRef="g_route" targetRef="f_develop" name="Sí"/>
+    <sequenceFlow id="f9" sourceRef="f_support" targetRef="g_merge"/>
+    <sequenceFlow id="f10" sourceRef="f_develop" targetRef="g_merge"/>
+    <sequenceFlow id="f11" sourceRef="g_merge" targetRef="f_document"/>
+    <sequenceFlow id="f12" sourceRef="f_document" targetRef="f_history"/>
+    <sequenceFlow id="f13" sourceRef="f_history" targetRef="g_solved"/>
+    <sequenceFlow id="f14" sourceRef="g_solved" targetRef="f_close" name="Sí"/>
+    <sequenceFlow id="f15" sourceRef="g_solved" targetRef="f_reassign" name="No"/>
+    <sequenceFlow id="f16" sourceRef="f_reassign" targetRef="f_update"/>
+    <sequenceFlow id="f17" sourceRef="f_close" targetRef="f_autoclose"/>
+    <sequenceFlow id="f18" sourceRef="f_autoclose" targetRef="f_notify"/>
+    <sequenceFlow id="f19" sourceRef="f_notify" targetRef="f_end"/>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_SAC">
+    <bpmndi:BPMNPlane id="BPMNPlane_SAC" bpmnElement="Collaboration_SAC">
+      <bpmndi:BPMNShape id="Participant_Cliente_di" bpmnElement="Participant_Cliente" isHorizontal="true">
+        <dc:Bounds x="18" y="74" width="109" height="736"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Participant_FOCA_di" bpmnElement="Participant_FOCA" isHorizontal="true">
+        <dc:Bounds x="133" y="74" width="444" height="736"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Soporte_di" bpmnElement="Lane_Soporte" isHorizontal="true">
+        <dc:Bounds x="133" y="98" width="111" height="712"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Sac_di" bpmnElement="Lane_Sac" isHorizontal="true">
+        <dc:Bounds x="244" y="98" width="110" height="712"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Coord_di" bpmnElement="Lane_Coord" isHorizontal="true">
+        <dc:Bounds x="354" y="98" width="112" height="712"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="Lane_Desarrollo_di" bpmnElement="Lane_Desarrollo" isHorizontal="true">
+        <dc:Bounds x="466" y="98" width="111" height="712"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="cl_start_di" bpmnElement="cl_start">
+        <dc:Bounds x="63.9" y="134.9" width="20.2" height="20.2"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="cl_send_di" bpmnElement="cl_send">
+        <dc:Bounds x="32.5" y="172.0" width="83" height="34"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="cl_receive_di" bpmnElement="cl_receive">
+        <dc:Bounds x="32.5" y="744.0" width="83" height="34"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="cl_end_di" bpmnElement="cl_end">
+        <dc:Bounds x="63.9" y="787.9" width="20.2" height="20.2"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_start_di" bpmnElement="f_start">
+        <dc:Bounds x="178.9" y="135.9" width="20.2" height="20.2"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_collect_di" bpmnElement="f_collect">
+        <dc:Bounds x="142.0" y="174.0" width="94" height="32"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_register_di" bpmnElement="f_register">
+        <dc:Bounds x="142.0" y="215.0" width="94" height="32"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_store_di" bpmnElement="f_store">
+        <dc:Bounds x="252.0" y="257.0" width="94" height="32"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_classify_di" bpmnElement="f_classify">
+        <dc:Bounds x="363.0" y="299.0" width="94" height="32"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_update_di" bpmnElement="f_update">
+        <dc:Bounds x="251.0" y="341.0" width="96" height="32"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="g_route_di" bpmnElement="g_route">
+        <dc:Bounds x="391.2" y="392.2" width="37.6" height="37.6"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_support_di" bpmnElement="f_support">
+        <dc:Bounds x="142.0" y="447.0" width="94" height="32"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_develop_di" bpmnElement="f_develop">
+        <dc:Bounds x="478.0" y="447.0" width="86" height="32"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="g_merge_di" bpmnElement="g_merge">
+        <dc:Bounds x="391.2" y="485.2" width="37.6" height="37.6"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_document_di" bpmnElement="f_document">
+        <dc:Bounds x="142.0" y="527.0" width="94" height="32"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_history_di" bpmnElement="f_history">
+        <dc:Bounds x="252.0" y="569.0" width="94" height="32"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="g_solved_di" bpmnElement="g_solved">
+        <dc:Bounds x="391.2" y="611.2" width="37.6" height="37.6"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_reassign_di" bpmnElement="f_reassign">
+        <dc:Bounds x="363.0" y="666.0" width="94" height="32"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_close_di" bpmnElement="f_close">
+        <dc:Bounds x="142.0" y="666.0" width="94" height="32"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_autoclose_di" bpmnElement="f_autoclose">
+        <dc:Bounds x="252.0" y="707.0" width="94" height="32"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_notify_di" bpmnElement="f_notify">
+        <dc:Bounds x="142.0" y="746.0" width="94" height="32"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape id="f_end_di" bpmnElement="f_end">
+        <dc:Bounds x="178.9" y="783.9" width="20.2" height="20.2"/>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge id="BPMNEdge_c1" bpmnElement="c1"><di:waypoint x="74" y="155"/><di:waypoint x="74" y="172"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_c2" bpmnElement="c2"><di:waypoint x="74" y="206"/><di:waypoint x="74" y="743"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_c3" bpmnElement="c3"><di:waypoint x="74" y="777"/><di:waypoint x="74" y="788"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_m1" bpmnElement="m1"><di:waypoint x="121" y="189"/><di:waypoint x="142" y="189"/><di:waypoint x="142" y="146"/><di:waypoint x="178" y="146"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_m2" bpmnElement="m2"><di:waypoint x="142" y="762"/><di:waypoint x="129" y="762"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f1" bpmnElement="f1"><di:waypoint x="189" y="156"/><di:waypoint x="189" y="173"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f2" bpmnElement="f2"><di:waypoint x="189" y="206"/><di:waypoint x="189" y="215"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f3" bpmnElement="f3"><di:waypoint x="189" y="247"/><di:waypoint x="189" y="254"/><di:waypoint x="299" y="254"/><di:waypoint x="299" y="257"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f4" bpmnElement="f4"><di:waypoint x="299" y="289"/><di:waypoint x="299" y="294"/><di:waypoint x="410" y="294"/><di:waypoint x="410" y="299"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f5" bpmnElement="f5"><di:waypoint x="410" y="331"/><di:waypoint x="410" y="338"/><di:waypoint x="299" y="338"/><di:waypoint x="299" y="341"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f6" bpmnElement="f6"><di:waypoint x="299" y="373"/><di:waypoint x="299" y="384"/><di:waypoint x="410" y="384"/><di:waypoint x="410" y="392"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f7" bpmnElement="f7"><di:waypoint x="391" y="411"/><di:waypoint x="189" y="411"/><di:waypoint x="189" y="447"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f8" bpmnElement="f8"><di:waypoint x="429" y="411"/><di:waypoint x="521" y="411"/><di:waypoint x="521" y="447"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f9" bpmnElement="f9"><di:waypoint x="189" y="479"/><di:waypoint x="189" y="504"/><di:waypoint x="391" y="504"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f10" bpmnElement="f10"><di:waypoint x="521" y="479"/><di:waypoint x="521" y="504"/><di:waypoint x="429" y="504"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f11" bpmnElement="f11"><di:waypoint x="410" y="523"/><di:waypoint x="410" y="543"/><di:waypoint x="237" y="543"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f12" bpmnElement="f12"><di:waypoint x="189" y="559"/><di:waypoint x="189" y="566"/><di:waypoint x="299" y="566"/><di:waypoint x="299" y="569"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f13" bpmnElement="f13"><di:waypoint x="299" y="601"/><di:waypoint x="299" y="611"/><di:waypoint x="410" y="611"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f14" bpmnElement="f14"><di:waypoint x="391" y="630"/><di:waypoint x="189" y="630"/><di:waypoint x="189" y="666"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f15" bpmnElement="f15"><di:waypoint x="410" y="649"/><di:waypoint x="410" y="666"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f16" bpmnElement="f16"><di:waypoint x="457" y="682"/><di:waypoint x="570" y="682"/><di:waypoint x="570" y="357"/><di:waypoint x="347" y="357"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f17" bpmnElement="f17"><di:waypoint x="189" y="698"/><di:waypoint x="189" y="704"/><di:waypoint x="299" y="704"/><di:waypoint x="299" y="707"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f18" bpmnElement="f18"><di:waypoint x="299" y="739"/><di:waypoint x="299" y="744"/><di:waypoint x="189" y="744"/><di:waypoint x="189" y="746"/></bpmndi:BPMNEdge><bpmndi:BPMNEdge id="BPMNEdge_f19" bpmnElement="f19"><di:waypoint x="189" y="778"/><di:waypoint x="189" y="784"/></bpmndi:BPMNEdge></bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
