@@ -46,6 +46,6 @@ El diagrama utiliza participantes (*Pools*), carriles de responsabilidad (*Lanes
 
 Para la elaboración del Trabajo Práctico Integrador se utilizó **ChatGPT** como herramienta de apoyo para organizar las consignas, revisar la redacción, proponer la estructura del flujo BPMN y adaptar su presentación a un formato legible. En las entregas anteriores también se declaró asistencia para la organización de ideas, la revisión documental y la planificación inicial.
 
-### Revisión y correcciones humanas
+### Revisión
 
 La asistencia de IA no se incorporó sin revisión. Se precisó que **el cliente no registra directamente el ticket**, sino que se comunica con soporte y un técnico realiza la carga; también se corrigió la asignación para que dependa de **Coordinación/Supervisión**, y se solicitó reorganizar el diagrama para su lectura en una sola hoja de Word. El contenido se contrastó con los objetivos, las áreas involucradas y las entidades de datos descritas en las Entregas 1, 2 y 3.
